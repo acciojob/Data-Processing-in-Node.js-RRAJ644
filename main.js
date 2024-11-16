@@ -1,33 +1,32 @@
+//Implement the processData function in app.js:
+
 const fs = require('fs')
 const { Transform } = require('stream')
 
 function processData(inputFilePath, outputFilePath) {
-  // Implement this function
-  const readableStream = fs.createReadStream(inputFilePath, {
-    encoding: 'utf-8',
-  })
+  const readStream = fs.createReadStream(inputFilePath, { encoding: 'utf8' })
 
-  const writableStream = fs.createWriteStream(outputFilePath)
+  const writeStream = fs.createWriteStream(outputFilePath)
 
   const transformStream = new Transform({
     transform(chunk, encoding, callback) {
-      try {
-        const processedChunk = chunk.toUpperCase()
-        callback(null, processedChunk)
-      } catch (error) {
-        callback(error)
-      }
+      const transformedChunk = chunk.toString().toUpperCase()
+      this.push(transformedChunk)
+      callback()
     },
   })
+  readStream.pipe(transformStream).pipe(writeStream)
 
-  readableStream.on('error', (err) => console.log(err))
-  writableStream.on('error', (err) => console.log(err))
-  transformStream.on('error', (err) => console.log(err))
+  readStream.on('error', (err) => {
+    console.error('Error reading the file:', err)
+  })
 
-  readableStream.pipe(transformStream).pipe(writableStream)
+  writeStream.on('error', (err) => {
+    console.error('Error writing to the file:', err)
+  })
 
-  writableStream.on('finish', () => {
-    console.log('Data processing complete. Output written to', outputFilePath)
+  writeStream.on('finish', () => {
+    console.log('Data processing and writing to file completed.')
   })
 }
 
